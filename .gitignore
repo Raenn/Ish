@@ -30,3 +30,6 @@ proguard/
 /.idea/libraries
 
 .idea
+
+#personal files
+forward.bat

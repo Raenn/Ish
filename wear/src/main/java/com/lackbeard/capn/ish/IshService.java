@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.util.TimeZone;
@@ -21,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Dan on 26/04/2015.
- */
+*/
 public class IshService extends CanvasWatchFaceService {
 
     //update once a minute
@@ -44,7 +46,7 @@ public class IshService extends CanvasWatchFaceService {
         final Handler mUpdateTimeHandler = new Handler() {
             @Override
             public void handleMessage(Message message) {
-                System.out.println("handling message");
+                Log.i("IshService", "Handling update message");
                 switch (message.what) {
                     case MSG_UPDATE_TIME:
                         invalidate();
@@ -73,6 +75,8 @@ public class IshService extends CanvasWatchFaceService {
             super.onCreate(holder);
             /* init watch face */
 
+            Log.d("IshService", "creating!");
+
             /* Config the system UI */
             setWatchFaceStyle(new WatchFaceStyle.Builder(IshService.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
@@ -81,15 +85,21 @@ public class IshService extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
+            mHourPaint = new Paint();
+            mHourPaint.setTextSize(30);
+            mHourPaint.setColor(Color.GREEN);
+            mHourPaint.setAntiAlias(true);
+            mHourPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mMinutePaint = new Paint();
+            mMinutePaint.setTextSize(30);
+            mMinutePaint.setColor(Color.MAGENTA);
+            mMinutePaint.setAntiAlias(true);
+            mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
+
             Resources resources = IshService.this.getResources();
 //            Drawable backgroundDrawable = resources.getDrawable(R.drawable.bg);
 //            mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
-
-            mHourPaint = new Paint();
-            mHourPaint.setARGB(255, 200, 200, 200);
-            mHourPaint.setStrokeWidth(5.0f);
-            mHourPaint.setAntiAlias(true);
-            mHourPaint.setStrokeCap(Paint.Cap.ROUND);
 
             mTime = new Time();
         }
@@ -121,10 +131,12 @@ public class IshService extends CanvasWatchFaceService {
             /* draw your watch face */
             mTime.setToNow();
 
-            int width = bounds.width();
-            int height = bounds.height();
+//            int width = bounds.width();
+//            int height = bounds.height();
 
-            canvas.drawLine(0, height / 2, width, height / 2, mHourPaint);
+            canvas.drawText(Integer.toString(mTime.hour), 100, 100, mHourPaint);
+            canvas.drawText(Integer.toString(mTime.minute), 150, 150, mMinutePaint);
+//            canvas.drawLine(0, height / 2, width, height / 2, mHourPaint);
         }
 
         @Override
