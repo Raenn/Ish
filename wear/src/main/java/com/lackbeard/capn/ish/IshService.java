@@ -18,6 +18,7 @@ import android.text.format.Time;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -30,11 +31,6 @@ public class IshService extends CanvasWatchFaceService {
     private static final long NORMAL_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
     private static final long MUTE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
-    Paint mBackgroundPaint;
-    Paint mHourPaint;
-    Paint mMinutePaint;
-    Time mTime;
-
     @Override
     public Engine onCreateEngine() {
         /* Watch face implementation goes here */
@@ -42,6 +38,15 @@ public class IshService extends CanvasWatchFaceService {
     }
 
     private class Engine extends CanvasWatchFaceService.Engine {
+
+        Paint mBackgroundPaint;
+        Paint mPrefixPaint;
+        Paint mIshPaint;
+        Paint mHourPaint;
+        Paint mMinutePaint;
+        Time mTime;
+
+        String[] roughTime;
 
         final Handler mUpdateTimeHandler = new Handler() {
             @Override
@@ -85,17 +90,31 @@ public class IshService extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
+            mPrefixPaint = new Paint();
+            mPrefixPaint.setTextSize(20);
+            mPrefixPaint.setColor(Color.WHITE);
+            mPrefixPaint.setAntiAlias(true);
+            mPrefixPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mIshPaint = new Paint();
+            mIshPaint.setTextSize(20);
+            mIshPaint.setColor(Color.WHITE);
+            mIshPaint.setAntiAlias(true);
+            mIshPaint.setStrokeCap(Paint.Cap.ROUND);
+
             mHourPaint = new Paint();
-            mHourPaint.setTextSize(30);
-            mHourPaint.setColor(Color.GREEN);
+            mHourPaint.setTextSize(40);
+            mHourPaint.setColor(Color.WHITE);
             mHourPaint.setAntiAlias(true);
             mHourPaint.setStrokeCap(Paint.Cap.ROUND);
 
             mMinutePaint = new Paint();
-            mMinutePaint.setTextSize(30);
-            mMinutePaint.setColor(Color.MAGENTA);
+            mMinutePaint.setTextSize(40);
+            mMinutePaint.setColor(Color.WHITE);
             mMinutePaint.setAntiAlias(true);
             mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
+
+            roughTime = new String[3];
 
             Resources resources = IshService.this.getResources();
 //            Drawable backgroundDrawable = resources.getDrawable(R.drawable.bg);
@@ -126,17 +145,90 @@ public class IshService extends CanvasWatchFaceService {
             updateTimer();
         }
 
+
+
+        private String[] hourWords = {"twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"};
+        private String[] minuteWords = {"", "ten", "twenty", "thirty", "fourty", "fifty"};
+        private String[] beforeWords = {"almost", "nearly"};
+        private String[] afterWords = {"just gone"};
+
+        private String convertHourToWord(int src) {
+
+            boolean isAM = (src <= 11);
+
+            if (src == 0) {
+                //TODO: special 'noon' and 'midnight' stuff?
+                return "twelve";
+            } else {
+                return hourWords[(src % 12)];
+            }
+        }
+
+        //NB: assumes you've already rounded the minutea to nearest ten - likely to change
+        private String convertMinuteToWord(int src) {
+            return minuteWords[src / 10];
+        }
+
+        private String getRandomStringFromArray(String[] array) {
+            Random rng = new Random();
+            return array[rng.nextInt(array.length)];
+        }
+
+        private String[] getRoughTime(Time exact) {
+
+            //work out whether to diplay 'almost' or 'just gone'
+            int minutesSincePreviousMarker = exact.minute % 10;
+
+            //TODO: make object, not horrifying string array
+            if (minutesSincePreviousMarker == 0) {
+                return new String[] {
+                        "",
+                        convertHourToWord(exact.hour),
+                        convertMinuteToWord(exact.minute)
+                };
+            } else if (minutesSincePreviousMarker < 5) {
+                return new String[] {
+                        getRandomStringFromArray(afterWords),
+                        convertHourToWord(exact.hour),
+                        convertMinuteToWord(10 * (exact.minute / 10))
+                };
+            } else /*if (minutesSincePreviousMarker >= 5)*/ {
+                return new String[] {
+                        //TODO: better logic. Needs to deal with the 10:56 case, where it should => 'almost 11 <>'
+                        getRandomStringFromArray(beforeWords),
+                        convertHourToWord(exact.hour),
+                        convertMinuteToWord(10 * (1 + exact.minute / 10))
+                };
+            }
+        };
+
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
             /* draw your watch face */
             mTime.setToNow();
 
-//            int width = bounds.width();
-//            int height = bounds.height();
+            int width = bounds.width();
+            int height = bounds.height();
 
-            canvas.drawText(Integer.toString(mTime.hour), 100, 100, mHourPaint);
-            canvas.drawText(Integer.toString(mTime.minute), 150, 150, mMinutePaint);
-//            canvas.drawLine(0, height / 2, width, height / 2, mHourPaint);
+            roughTime = getRoughTime(mTime);
+
+            String ishString = roughTime[0];
+            String hourString = roughTime[1];
+            String minuteString = roughTime[2];
+
+            float[] xOffsets = {
+                    mPrefixPaint.measureText("it's"),
+                    mIshPaint.measureText(ishString),
+                    mHourPaint.measureText(hourString),
+                    mMinutePaint.measureText(minuteString)
+            };
+
+            canvas.drawColor(Color.BLACK);
+
+            canvas.drawText("it's", bounds.centerX() - xOffsets[0] / 2, 100, mPrefixPaint);
+            canvas.drawText(ishString, bounds.centerX() - xOffsets[1] / 2, 130, mIshPaint);
+            canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 170, mHourPaint);
+            canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 220, mMinutePaint);
         }
 
         @Override
