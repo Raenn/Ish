@@ -106,6 +106,7 @@ public class RoughTimeConverter {
 //                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed) % 60));
 //            } else {
             ret.setHourString(convertHourToWord(hourToUse));
+            //this line is buggy at 12:08
             ret.setMinuteString(convertMinuteToWord((10 * (exact.minute / 10))));
 //            }
 
