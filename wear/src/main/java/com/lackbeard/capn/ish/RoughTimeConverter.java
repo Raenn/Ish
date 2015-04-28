@@ -19,9 +19,7 @@ public class RoughTimeConverter {
     private String[] afterWords = {"just gone"};
 
     private String convertHourToWord(int src) {
-        boolean isAM = (src <= 11);
-
-        if (src % 12 == 0) {
+        if (src == 0) {
             //TODO: special 'noon' and 'midnight' stuff?
             return "twelve";
         } else {
@@ -61,6 +59,13 @@ public class RoughTimeConverter {
 
         RoughTime ret = new RoughTime();
 
+        int hourToUse = exact.hour;
+
+        //make sure to use next hour if using a 'to'
+        if (exact.minute >= 35) {
+            hourToUse++;
+        }
+
         //work out whether to display 'almost' or 'just gone'
         int minutesSincePreviousMarker = exact.minute % 10;
         Log.i("minuteConversion", "minutes since: " + minutesSincePreviousMarker);
@@ -68,7 +73,7 @@ public class RoughTimeConverter {
         //deal with special cases - noon and midnight
         if (isAlmostSpecial(exact.hour, exact.minute)) {
             Log.i("roughTime", "special time found");
-            if (exact.hour == 0) {
+            if (hourToUse % 12 == 0) {
                 ret.setHourString("midnight");
             } else {
                 ret.setHourString("noon");
@@ -83,13 +88,6 @@ public class RoughTimeConverter {
         if (exact.minute >= 35 ||
                 (exact.minute >= 5 && exact.minute < 15)) {
             ret.setMinutesBeforeHours(true);
-        }
-
-        int hourToUse = exact.hour;
-
-        //make sure to use next hour if using a 'to'
-        if (exact.minute >= 35) {
-            hourToUse++;
         }
 
         if (minutesSincePreviousMarker == 0) {
@@ -108,7 +106,7 @@ public class RoughTimeConverter {
 //                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed) % 60));
 //            } else {
             ret.setHourString(convertHourToWord(hourToUse));
-            ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed)));
+            ret.setMinuteString(convertMinuteToWord((10 * (exact.minute / 10))));
 //            }
 
             ret.setIshString(getIshString(minutesSincePreviousMarker));
