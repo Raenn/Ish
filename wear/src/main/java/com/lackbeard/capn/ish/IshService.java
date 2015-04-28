@@ -46,7 +46,9 @@ public class IshService extends CanvasWatchFaceService {
         Paint mMinutePaint;
         Time mTime;
 
-        String[] roughTime;
+        //shut up I name my variables what I want
+        RoughTimeConverter ishGenerator;
+        RoughTime roughTime;
 
         final Handler mUpdateTimeHandler = new Handler() {
             @Override
@@ -90,6 +92,8 @@ public class IshService extends CanvasWatchFaceService {
                     .setShowSystemUiTime(false)
                     .build());
 
+            ishGenerator = new RoughTimeConverter();
+
             mPrefixPaint = new Paint();
             mPrefixPaint.setTextSize(20);
             mPrefixPaint.setColor(Color.WHITE);
@@ -113,8 +117,6 @@ public class IshService extends CanvasWatchFaceService {
             mMinutePaint.setColor(Color.WHITE);
             mMinutePaint.setAntiAlias(true);
             mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
-
-            roughTime = new String[3];
 
             Resources resources = IshService.this.getResources();
 //            Drawable backgroundDrawable = resources.getDrawable(R.drawable.bg);
@@ -145,71 +147,6 @@ public class IshService extends CanvasWatchFaceService {
             updateTimer();
         }
 
-
-
-        private String[] hourWords = {"twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"};
-        private String[] minuteWords = {"", "ten", "twenty", "thirty", "fourty", "fifty"};
-        private String[] beforeWords = {"almost", "nearly"};
-        private String[] afterWords = {"just gone"};
-
-        private String convertHourToWord(int src) {
-
-            boolean isAM = (src <= 11);
-
-            if (src % 12 == 0) {
-                //TODO: special 'noon' and 'midnight' stuff?
-                return "twelve";
-            } else {
-                return hourWords[(src % 12)];
-            }
-        }
-
-        //NB: assumes you've already rounded the minutea to nearest ten - likely to change
-        private String convertMinuteToWord(int src) {
-            return minuteWords[src / 10];
-        }
-
-        private String getRandomStringFromArray(String[] array) {
-            Random rng = new Random();
-            return array[rng.nextInt(array.length)];
-        }
-
-        private String[] getRoughTime(Time exact) {
-
-            //work out whether to diplay 'almost' or 'just gone'
-            int minutesSincePreviousMarker = exact.minute % 10;
-
-            //TODO: make object, not horrifying string array
-            if (minutesSincePreviousMarker == 0) {
-                return new String[] {
-                        "",
-                        convertHourToWord(exact.hour),
-                        convertMinuteToWord(exact.minute)
-                };
-            } else if (minutesSincePreviousMarker < 5) {
-                return new String[] {
-                        getRandomStringFromArray(afterWords),
-                        convertHourToWord(exact.hour),
-                        convertMinuteToWord(10 * (exact.minute / 10))
-                };
-            } else /*if (minutesSincePreviousMarker >= 5)*/ {
-                //special case to deal with mins > 55 i.e. need to display next hour
-                String hourString;
-                if (1 + exact.minute / 10 == 6) {
-                    hourString = convertHourToWord(exact.hour + 1);
-                } else {
-                    hourString = convertHourToWord(exact.hour);
-                }
-
-                return new String[] {
-                        //TODO: better logic. Needs to deal with the 10:56 case, where it should => 'almost 11 <>'
-                        getRandomStringFromArray(beforeWords),
-                        hourString,
-                        convertMinuteToWord((10 * (1 + exact.minute / 10)) % 6)
-                };
-            }
-        };
-
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
             /* draw your watch face */
@@ -218,11 +155,13 @@ public class IshService extends CanvasWatchFaceService {
             int width = bounds.width();
             int height = bounds.height();
 
-            roughTime = getRoughTime(mTime);
+            roughTime = ishGenerator.convertToRoughTime(mTime);
 
-            String ishString = roughTime[0];
-            String hourString = roughTime[1];
-            String minuteString = roughTime[2];
+            String ishString = roughTime.getIshString();
+            String hourString = roughTime.getHourString();
+            String minuteString = roughTime.getMinuteString();
+
+            Log.i("IshService", "trying to display time: " + hourString + ":" + minuteString + "(" + ishString + ")");
 
             float[] xOffsets = {
                     mPrefixPaint.measureText("it's"),
