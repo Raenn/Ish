@@ -170,7 +170,7 @@ public class IshService extends CanvasWatchFaceService {
 
             float[] yHeights = {
                     -mPrefixPaint.ascent() + mPrefixPaint.descent(),
-                    -mIshPaint.ascent() + mIshPaint.descent(),
+                    ishString == "" ? 0 : -mIshPaint.ascent() + mIshPaint.descent(),
                     -mHourPaint.ascent() + mHourPaint.descent(),
                     minuteString == "" ? 0 : -mMinutePaint.ascent() + mMinutePaint.descent()
             };
