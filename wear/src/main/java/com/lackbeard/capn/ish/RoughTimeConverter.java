@@ -107,8 +107,8 @@ public class RoughTimeConverter {
 //                ret.setHourString(convertHourToWord(hourToUse));
 //                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed) % 60));
 //            } else {
-                ret.setHourString(convertHourToWord(hourToUse));
-                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed)));
+            ret.setHourString(convertHourToWord(hourToUse));
+            ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed)));
 //            }
 
             ret.setIshString(getIshString(minutesSincePreviousMarker));
