@@ -14,7 +14,7 @@ public class RoughTimeConverter {
     }
 
     private String[] hourWords = {"twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"};
-    private String[] minuteWords = {"", "ten", "twenty", "thirty", "fourty", "fifty"};
+    private String[] minuteWords = {"", "ten", "twenty", "thirty", "twenty to", "ten to"};
     private String[] beforeWords = {"almost", "nearly"};
     private String[] afterWords = {"just gone"};
 
@@ -48,22 +48,21 @@ public class RoughTimeConverter {
     }
 
     private String getIshString(int minutesSinceLastMarker) {
-        if (minutesSinceLastMarker < 5) {
-            return getRandomStringFromArray(afterWords);
-        } else if (minutesSinceLastMarker > 5) {
-            return getRandomStringFromArray(beforeWords);
-        } else {
+        if (minutesSinceLastMarker == 0) {
             return "";
+        } else if (minutesSinceLastMarker < 5) {
+            return getRandomStringFromArray(afterWords);
+        } else /*if (minutesSinceLastMarker >= 5)*/ {
+            return getRandomStringFromArray(beforeWords);
         }
     }
 
     public RoughTime convertToRoughTime(Time exact) {
+
         RoughTime ret = new RoughTime();
 
         //work out whether to diplay 'almost' or 'just gone'
         int minutesSincePreviousMarker = exact.minute % 10;
-
-        Log.i("roughTime", Integer.toString(minutesSincePreviousMarker));
 
         //deal with special cases - noon and midnight
         if (isAlmostSpecial(exact.hour, exact.minute)) {
@@ -78,28 +77,31 @@ public class RoughTimeConverter {
             return ret;
         }
 
+        //if minutes >= 3, then the minutes go BEFORE the words
+        // i.e. "nearly twenty to ten" (not "nearly ten twenty to"!)
+        if (exact.minute >= 35) {
+            ret.setMinutesBeforeHours(true);
+        }
+
         if (minutesSincePreviousMarker == 0) {
-            Log.i("roughTime", "exact time found");
             ret.setMinuteString("");
             ret.setHourString(convertHourToWord(exact.hour));
             ret.setIshString(getIshString(minutesSincePreviousMarker));
         } else if (minutesSincePreviousMarker < 5) {
-            Log.i("roughTime", "just missed a time...found");
             ret.setMinuteString(convertMinuteToWord(10 * (exact.minute / 10)));
             ret.setHourString(convertHourToWord(exact.hour));
             ret.setIshString(getIshString(minutesSincePreviousMarker));
         } else /*if (minutesSincePreviousMarker >= 5)*/ {
-            Log.i("roughTime", "just gone past a time... found");
-            //special case to deal with mins > 55 i.e. need to display next hour
-            String hourString;
-            if (1 + exact.minute / 10 == 6) {
-                hourString = convertHourToWord(exact.hour + 1);
+            //special case to deal with mins > 55 i.e. need to display next hour - "nearly 12" at 11:55
+            int tensOfMinutesElapsed = 1 + (exact.minute / 10);
+            if (tensOfMinutesElapsed == 6) {
+                ret.setHourString(convertHourToWord(exact.hour + 1));
+                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed) % 60));
             } else {
-                hourString = convertHourToWord(exact.hour);
+                ret.setHourString(convertHourToWord(exact.hour));
+                ret.setMinuteString(convertMinuteToWord((10 * tensOfMinutesElapsed)));
             }
 
-            ret.setMinuteString(convertMinuteToWord((10 * (1 + exact.minute / 10)) % 6));
-            ret.setHourString(hourString);
             ret.setIshString(getIshString(minutesSincePreviousMarker));
         }
 

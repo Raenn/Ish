@@ -161,8 +161,6 @@ public class IshService extends CanvasWatchFaceService {
             String hourString = roughTime.getHourString();
             String minuteString = roughTime.getMinuteString();
 
-            Log.i("IshService", "trying to display time: " + hourString + ":" + minuteString + "(" + ishString + ")");
-
             float[] xOffsets = {
                     mPrefixPaint.measureText("it's"),
                     mIshPaint.measureText(ishString),
@@ -170,12 +168,34 @@ public class IshService extends CanvasWatchFaceService {
                     mMinutePaint.measureText(minuteString)
             };
 
+            float[] yHeights = {
+                    -mPrefixPaint.ascent() + mPrefixPaint.descent(),
+                    -mIshPaint.ascent() + mIshPaint.descent(),
+                    -mHourPaint.ascent() + mHourPaint.descent(),
+                    minuteString == "" ? 0 : -mMinutePaint.ascent() + mMinutePaint.descent()
+            };
+
             canvas.drawColor(Color.BLACK);
 
-            canvas.drawText("it's", bounds.centerX() - xOffsets[0] / 2, 100, mPrefixPaint);
-            canvas.drawText(ishString, bounds.centerX() - xOffsets[1] / 2, 130, mIshPaint);
-            canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 170, mHourPaint);
-            canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 220, mMinutePaint);
+            //oh god this is horrible but I'm lazy and not sober and I want this done tonight please forgive me Code Zeus
+            float cumulativeOffsets = 0;
+
+            canvas.drawText("it's", bounds.centerX() - xOffsets[0] / 2, 100 + cumulativeOffsets, mPrefixPaint);
+            cumulativeOffsets += yHeights[0];
+            canvas.drawText(ishString, bounds.centerX() - xOffsets[1] / 2, 100 + cumulativeOffsets, mIshPaint);
+            cumulativeOffsets += yHeights[1] + 30;
+
+            if (roughTime.isMinutesBeforeHours()) {
+                canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 100 + cumulativeOffsets, mMinutePaint);
+                cumulativeOffsets += yHeights[3];
+                canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 100 + cumulativeOffsets, mHourPaint);
+                cumulativeOffsets += yHeights[2];
+            } else {
+                canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 100 + cumulativeOffsets, mHourPaint);
+                cumulativeOffsets += yHeights[2];
+                canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 100 + cumulativeOffsets, mMinutePaint);
+                cumulativeOffsets += yHeights[3];
+            }
         }
 
         @Override
