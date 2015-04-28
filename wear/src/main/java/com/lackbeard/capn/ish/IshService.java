@@ -156,7 +156,7 @@ public class IshService extends CanvasWatchFaceService {
 
             boolean isAM = (src <= 11);
 
-            if (src == 0) {
+            if (src % 12 == 0) {
                 //TODO: special 'noon' and 'midnight' stuff?
                 return "twelve";
             } else {
@@ -193,11 +193,19 @@ public class IshService extends CanvasWatchFaceService {
                         convertMinuteToWord(10 * (exact.minute / 10))
                 };
             } else /*if (minutesSincePreviousMarker >= 5)*/ {
+                //special case to deal with mins > 55 i.e. need to display next hour
+                String hourString;
+                if (1 + exact.minute / 10 == 6) {
+                    hourString = convertHourToWord(exact.hour + 1);
+                } else {
+                    hourString = convertHourToWord(exact.hour);
+                }
+
                 return new String[] {
                         //TODO: better logic. Needs to deal with the 10:56 case, where it should => 'almost 11 <>'
                         getRandomStringFromArray(beforeWords),
-                        convertHourToWord(exact.hour),
-                        convertMinuteToWord(10 * (1 + exact.minute / 10))
+                        hourString,
+                        convertMinuteToWord((10 * (1 + exact.minute / 10)) % 6)
                 };
             }
         };
