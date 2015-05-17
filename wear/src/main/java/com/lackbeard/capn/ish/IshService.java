@@ -204,7 +204,7 @@ public class IshService extends CanvasWatchFaceService {
             wordsToDraw.add(
                     new DrawableWord("it's",
                             extraFontHeight,
-                            2, //EXTRA_PADDING,
+                            3, //TODO: padding looks dodgy when there's no 'ish'. was previously using EXTRA_PADDING,
                             mPrefixPaint)
             );
             wordsToDraw.add(
@@ -248,9 +248,9 @@ public class IshService extends CanvasWatchFaceService {
                 canvas.drawText(
                         word.getWord(),
                         bounds.centerX() - word.getWidth() / 2,
-                        yOffset,
+                        yOffset + (word.getPadding() == TIME_PADDING ? TIME_PADDING : 0),
                         word.getPaint());
-                yOffset += word.getHeight() + word.getPadding();
+                yOffset += word.getHeight() + (i == wordsToDraw.size() - 1 ? 0 : word.getPadding());
             }
         }
 
