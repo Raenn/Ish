@@ -33,18 +33,21 @@ public class IshService extends CanvasWatchFaceService {
     private static final long MUTE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
     private static float timeFontHeight, extraFontHeight;
-    private static float textPadding = 10;
+    private static final float TIME_PADDING = 2;
+    private static final float EXTRA_PADDING = 18;
 
     private ArrayList<DrawableWord> wordsToDraw;
 
     private class DrawableWord {
         private final String word;
         private final float height;
+        private float padding;
         private final Paint paint;
 
-        public DrawableWord(String word, float height, Paint paint) {
+        public DrawableWord(String word, float height, float padding, Paint paint) {
             this.word = word;
             this.height = height;
+            this.padding = padding;
             this.paint = paint;
         }
 
@@ -62,6 +65,10 @@ public class IshService extends CanvasWatchFaceService {
 
         public float getWidth() {
             return paint.measureText(word);
+        }
+
+        public float getPadding() {
+            return padding;
         }
     }
 
@@ -190,33 +197,40 @@ public class IshService extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             /* draw your watch face */
             mTime.setToNow();
-
-            int width = bounds.width();
-            int height = bounds.height();
-
             roughTime = ishGenerator.convertToRoughTime(mTime);
-
-            String ishString = roughTime.getIshString();
-            String hourString = roughTime.getHourString();
-            String minuteString = roughTime.getMinuteString();
 
             wordsToDraw.clear();
             wordsToDraw.add(
-                    new DrawableWord("it's", extraFontHeight, mPrefixPaint)
+                    new DrawableWord("it's",
+                            extraFontHeight,
+                            2, //EXTRA_PADDING,
+                            mPrefixPaint)
             );
             wordsToDraw.add(
-                    new DrawableWord(roughTime.getHourString(), timeFontHeight, mHourPaint)
+                    new DrawableWord(
+                            roughTime.getHourString(),
+                            timeFontHeight,
+                            TIME_PADDING,
+                            mHourPaint)
             );
             if (!roughTime.getMinuteString().equals("")) {
                 wordsToDraw.add(
                         (roughTime.isMinutesBeforeHours() ? 1 : 2),
-                        new DrawableWord(roughTime.getMinuteString(), timeFontHeight, mMinutePaint)
+                        new DrawableWord(
+                                roughTime.getMinuteString(),
+                                timeFontHeight,
+                                TIME_PADDING,
+                                mMinutePaint)
                 );
             }
             if (!roughTime.getIshString().equals("")) {
                 wordsToDraw.add(
                         (roughTime.isIshBeforeTime() ? 1 : 3),
-                        new DrawableWord(roughTime.getIshString(), extraFontHeight, mIshPaint)
+                        new DrawableWord(
+                                roughTime.getIshString(),
+                                extraFontHeight,
+                                EXTRA_PADDING,
+                                mIshPaint)
                 );
             }
 
@@ -233,8 +247,9 @@ public class IshService extends CanvasWatchFaceService {
                 canvas.drawText(
                         word.getWord(),
                         bounds.centerX() - word.getWidth() / 2,
-                        yOffset, word.getPaint());
-                yOffset += word.getHeight() + textPadding;
+                        yOffset,
+                        word.getPaint());
+                yOffset += word.getHeight() + word.getPadding();
             }
         }
 

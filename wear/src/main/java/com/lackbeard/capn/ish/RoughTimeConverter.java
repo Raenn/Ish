@@ -53,6 +53,7 @@ public class RoughTimeConverter {
 
     public RoughTime convertToRoughTime(Time exact) {
         RoughTime ret = new RoughTime();
+        ret.setIshBeforeTime(true);
         int hourToUse = exact.hour;
         //make sure to use next hour if using a 'to'
         if (exact.minute >= 35) {
@@ -94,11 +95,10 @@ public class RoughTimeConverter {
             ret.setHourString(convertHourToWord(hourToUse));
             ret.setMinuteString(
                 convertMinuteToWord(
-                    10 * ((1 + exact.minute / 10) % 6)
+                        10 * ((1 + exact.minute / 10) % 6)
                 )
             );
-            ret.setIshString(getIshString(minutesSincePreviousMarker));
-            ret.setIshBeforeTime(true);
+            ret.setIshString(getIshString(minutesSincePreviousMarker));;
         }
 
         //should probably throw an exception if something goes wrong, //TODO
