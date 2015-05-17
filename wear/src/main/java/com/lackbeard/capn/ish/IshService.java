@@ -152,8 +152,6 @@ public class IshService extends CanvasWatchFaceService {
             /* draw your watch face */
             mTime.setToNow();
 
-            mTime.set(0, 8, 0, 1, 1, 2000);
-
             int width = bounds.width();
             int height = bounds.height();
 
