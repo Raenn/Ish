@@ -189,6 +189,7 @@ public class IshService extends CanvasWatchFaceService {
             super.onAmbientModeChanged(inAmbientMode);
             /* the wearable switched between modes */
             // should do some setAntiAlias etc on painted objects, when I have some
+            //TODO: investigate
             invalidate();
             updateTimer();
         }
