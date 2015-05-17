@@ -18,6 +18,7 @@ import android.text.format.Time;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,39 @@ public class IshService extends CanvasWatchFaceService {
     //update once a minute
     private static final long NORMAL_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
     private static final long MUTE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
+
+    private static float timeFontHeight, extraFontHeight;
+    private static float textPadding = 10;
+
+    private ArrayList<DrawableWord> wordsToDraw;
+
+    private class DrawableWord {
+        private final String word;
+        private final float height;
+        private final Paint paint;
+
+        public DrawableWord(String word, float height, Paint paint) {
+            this.word = word;
+            this.height = height;
+            this.paint = paint;
+        }
+
+        public String getWord() {
+            return word;
+        }
+
+        public float getHeight() {
+            return height;
+        }
+
+        public Paint getPaint() {
+            return paint;
+        }
+
+        public float getWidth() {
+            return paint.measureText(word);
+        }
+    }
 
     @Override
     public Engine onCreateEngine() {
@@ -118,9 +152,14 @@ public class IshService extends CanvasWatchFaceService {
             mMinutePaint.setAntiAlias(true);
             mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
 
+            timeFontHeight = -mHourPaint.ascent() + mHourPaint.descent();
+            extraFontHeight = -mPrefixPaint.ascent() + mPrefixPaint.descent();
+
             Resources resources = IshService.this.getResources();
 //            Drawable backgroundDrawable = resources.getDrawable(R.drawable.bg);
 //            mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
+
+            wordsToDraw = new ArrayList<>();
 
             mTime = new Time();
         }
@@ -161,40 +200,41 @@ public class IshService extends CanvasWatchFaceService {
             String hourString = roughTime.getHourString();
             String minuteString = roughTime.getMinuteString();
 
-            float[] xOffsets = {
-                    mPrefixPaint.measureText("it's"),
-                    mIshPaint.measureText(ishString),
-                    mHourPaint.measureText(hourString),
-                    mMinutePaint.measureText(minuteString)
-            };
+            wordsToDraw.clear();
+            wordsToDraw.add(
+                    new DrawableWord("it's", extraFontHeight, mPrefixPaint)
+            );
+            wordsToDraw.add(
+                    new DrawableWord(roughTime.getHourString(), timeFontHeight, mHourPaint)
+            );
+            if (!roughTime.getMinuteString().equals("")) {
+                wordsToDraw.add(
+                        (roughTime.isMinutesBeforeHours() ? 1 : 2),
+                        new DrawableWord(roughTime.getMinuteString(), timeFontHeight, mMinutePaint)
+                );
+            }
+            if (!roughTime.getIshString().equals("")) {
+                wordsToDraw.add(
+                        (roughTime.isIshBeforeTime() ? 1 : 3),
+                        new DrawableWord(roughTime.getIshString(), extraFontHeight, mIshPaint)
+                );
+            }
 
-            float[] yHeights = {
-                    -mPrefixPaint.ascent() + mPrefixPaint.descent(),
-                    ishString == "" ? 0 : -mIshPaint.ascent() + mIshPaint.descent(),
-                    -mHourPaint.ascent() + mHourPaint.descent(),
-                    minuteString == "" ? 0 : -mMinutePaint.ascent() + mMinutePaint.descent()
-            };
+            float totalHeight = 0;
+            for (int i=0; i < wordsToDraw.size(); i++) {
+                totalHeight += wordsToDraw.get(i).getHeight();
+            }
 
+            float yOffset = (bounds.height() - totalHeight) / 2;
             canvas.drawColor(Color.BLACK);
 
-            //oh god this is horrible but I'm lazy and not sober and I want this done tonight please forgive me Code Zeus
-            float cumulativeOffsets = 0;
-
-            canvas.drawText("it's", bounds.centerX() - xOffsets[0] / 2, 100 + cumulativeOffsets, mPrefixPaint);
-            cumulativeOffsets += yHeights[0];
-            canvas.drawText(ishString, bounds.centerX() - xOffsets[1] / 2, 100 + cumulativeOffsets, mIshPaint);
-            cumulativeOffsets += yHeights[1] + 30;
-
-            if (roughTime.isMinutesBeforeHours()) {
-                canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 100 + cumulativeOffsets, mMinutePaint);
-                cumulativeOffsets += yHeights[3];
-                canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 100 + cumulativeOffsets, mHourPaint);
-                cumulativeOffsets += yHeights[2];
-            } else {
-                canvas.drawText(hourString, bounds.centerX() - xOffsets[2] / 2, 100 + cumulativeOffsets, mHourPaint);
-                cumulativeOffsets += yHeights[2];
-                canvas.drawText(minuteString, bounds.centerX() - xOffsets[3] / 2, 100 + cumulativeOffsets, mMinutePaint);
-                cumulativeOffsets += yHeights[3];
+            for (int i=0; i < wordsToDraw.size(); i++) {
+                DrawableWord word = wordsToDraw.get(i);
+                canvas.drawText(
+                        word.getWord(),
+                        bounds.centerX() - word.getWidth() / 2,
+                        yOffset, word.getPaint());
+                yOffset += word.getHeight() + textPadding;
             }
         }
 

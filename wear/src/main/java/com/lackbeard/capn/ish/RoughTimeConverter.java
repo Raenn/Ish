@@ -9,10 +9,6 @@ import java.util.Random;
  * Created by Dan on 28/04/2015.
  */
 public class RoughTimeConverter {
-    public RoughTimeConverter() {
-
-    }
-
     private String[] hourWords = {"twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"};
     private String[] minuteWords = {"", "ten past", "twenty", "thirty", "twenty to", "ten to"};
     private String[] beforeWords = {"almost", "nearly"};
@@ -96,13 +92,13 @@ public class RoughTimeConverter {
             ret.setIshString(getIshString(minutesSincePreviousMarker));
         } else /*if (minutesSincePreviousMarker >= 5)*/ {
             ret.setHourString(convertHourToWord(hourToUse));
-            //this line is buggy at 12:08
             ret.setMinuteString(
                 convertMinuteToWord(
                     10 * ((1 + exact.minute / 10) % 6)
                 )
             );
             ret.setIshString(getIshString(minutesSincePreviousMarker));
+            ret.setIshBeforeTime(true);
         }
 
         //should probably throw an exception if something goes wrong, //TODO
